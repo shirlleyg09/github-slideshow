@@ -1,0 +1,279 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+
+enum UserRole { ADMIN TECHNICIAN CLIENT_MANAGER CLIENT_USER }
+enum UserStatus { ACTIVE INACTIVE INVITED }
+enum CompanyStatus { ACTIVE INACTIVE SUSPENDED }
+enum SystemType { INSTITUTIONAL_SITE LANDING_PAGE DASHBOARD WEB_SYSTEM MOBILE_SYSTEM API AUTOMATION INTEGRATION ECOMMERCE OTHER }
+enum SystemStatus { ACTIVE INACTIVE MAINTENANCE ARCHIVED }
+enum TicketCategory { SYSTEM_ERROR USAGE_QUESTION CHANGE_REQUEST IMPROVEMENT ACCESS_PROBLEM SLOWNESS REPORT_DASHBOARD INTEGRATION_API PUBLISHING OTHER }
+enum TicketPriority { LOW MEDIUM HIGH CRITICAL }
+enum TicketImpact { LOW MEDIUM HIGH CRITICAL }
+enum TicketStatus { NEW TRIAGE IN_PROGRESS WAITING_CLIENT WAITING_THIRD_PARTY DEVELOPMENT TESTING RESOLVED CLOSED REOPENED CANCELED }
+enum CommentType { PUBLIC INTERNAL }
+enum PlanStatus { ACTIVE INACTIVE }
+enum ContractStatus { ACTIVE PAUSED CANCELED EXPIRED }
+enum BalanceStatus { OPEN CLOSED ADJUSTED }
+enum ActivityType { TRIAGE CUSTOMER_SUPPORT TECHNICAL_ANALYSIS BUG_FIX VISUAL_ADJUSTMENT DEVELOPMENT TESTING MEETING DOCUMENTATION DEPLOY TRAINING LOG_INVESTIGATION INTEGRATION OTHER }
+enum BillingType { DEDUCTIBLE NON_DEDUCTIBLE EXTRA COURTESY }
+enum ArticleVisibility { INTERNAL CLIENTS BOTH }
+enum ArticleStatus { DRAFT PUBLISHED ARCHIVED }
+
+model User {
+  id String @id @default(cuid())
+  name String
+  email String @unique
+  passwordHash String
+  role UserRole @default(CLIENT_USER)
+  companyId String?
+  company Company? @relation(fields: [companyId], references: [id])
+  avatarUrl String?
+  status UserStatus @default(ACTIVE)
+  assignedSystems ClientSystem[] @relation("SystemResponsible")
+  requestedTickets Ticket[] @relation("TicketRequester")
+  assignedTickets Ticket[] @relation("TicketAssignee")
+  comments TicketComment[]
+  attachments TicketAttachment[]
+  histories TicketHistory[]
+  hourEntries SupportHourEntry[]
+  articles KnowledgeArticle[]
+  notifications Notification[]
+  auditLogs AuditLog[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Company {
+  id String @id @default(cuid())
+  name String
+  tradeName String?
+  cnpj String?
+  email String @unique
+  phone String?
+  responsibleName String
+  status CompanyStatus @default(ACTIVE)
+  notes String?
+  users User[]
+  systems ClientSystem[]
+  tickets Ticket[]
+  contracts ClientSupportContract[]
+  balances SupportHourBalance[]
+  hourEntries SupportHourEntry[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ClientSystem {
+  id String @id @default(cuid())
+  companyId String
+  company Company @relation(fields: [companyId], references: [id])
+  name String
+  type SystemType
+  productionUrl String?
+  stagingUrl String?
+  description String?
+  status SystemStatus @default(ACTIVE)
+  responsibleUserId String?
+  responsibleUser User? @relation("SystemResponsible", fields: [responsibleUserId], references: [id])
+  deliveryDate DateTime?
+  notes String?
+  tickets Ticket[]
+  articles KnowledgeArticle[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Ticket {
+  id String @id @default(cuid())
+  code String @unique
+  companyId String
+  company Company @relation(fields: [companyId], references: [id])
+  requesterId String
+  requester User @relation("TicketRequester", fields: [requesterId], references: [id])
+  systemId String?
+  system ClientSystem? @relation(fields: [systemId], references: [id])
+  assigneeId String?
+  assignee User? @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  title String
+  description String
+  attemptedAction String?
+  actualResult String?
+  expectedResult String?
+  occursSince String?
+  affectedUsers String?
+  category TicketCategory
+  priority TicketPriority @default(MEDIUM)
+  status TicketStatus @default(NEW)
+  impact TicketImpact @default(MEDIUM)
+  origin String @default("portal")
+  tags String[] @default([])
+  isImprovement Boolean @default(false)
+  isOutOfScope Boolean @default(false)
+  isBillable Boolean @default(true)
+  totalMinutes Int @default(0)
+  firstResponseAt DateTime?
+  resolvedAt DateTime?
+  closedAt DateTime?
+  comments TicketComment[]
+  attachments TicketAttachment[]
+  histories TicketHistory[]
+  hourEntries SupportHourEntry[]
+  notifications Notification[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TicketComment {
+  id String @id @default(cuid())
+  ticketId String
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  content String
+  type CommentType @default(PUBLIC)
+  attachments TicketAttachment[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TicketAttachment {
+  id String @id @default(cuid())
+  ticketId String
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  commentId String?
+  comment TicketComment? @relation(fields: [commentId], references: [id])
+  fileName String
+  fileUrl String
+  fileType String
+  fileSize Int
+  uploadedById String
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model TicketHistory {
+  id String @id @default(cuid())
+  ticketId String
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  userId String?
+  user User? @relation(fields: [userId], references: [id])
+  action String
+  oldValue String?
+  newValue String?
+  description String
+  createdAt DateTime @default(now())
+}
+
+model SupportPlan {
+  id String @id @default(cuid())
+  name String @unique
+  description String?
+  monthlyHours Int
+  monthlyPrice Decimal @db.Decimal(10,2)
+  extraHourPrice Decimal @db.Decimal(10,2) @default(0)
+  allowRollover Boolean @default(false)
+  rolloverLimit Int?
+  allowExtraHours Boolean @default(true)
+  requireExtraApproval Boolean @default(true)
+  status PlanStatus @default(ACTIVE)
+  contracts ClientSupportContract[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ClientSupportContract {
+  id String @id @default(cuid())
+  companyId String
+  company Company @relation(fields: [companyId], references: [id])
+  supportPlanId String
+  supportPlan SupportPlan @relation(fields: [supportPlanId], references: [id])
+  startDate DateTime @default(now())
+  renewalDay Int @default(1)
+  status ContractStatus @default(ACTIVE)
+  customMonthlyHours Int?
+  customPrice Decimal? @db.Decimal(10,2)
+  notes String?
+  balances SupportHourBalance[]
+  hourEntries SupportHourEntry[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SupportHourBalance {
+  id String @id @default(cuid())
+  contractId String
+  contract ClientSupportContract @relation(fields: [contractId], references: [id])
+  companyId String
+  company Company @relation(fields: [companyId], references: [id])
+  month Int
+  year Int
+  openingMinutes Int
+  usedMinutes Int @default(0)
+  remainingMinutes Int
+  extraMinutes Int @default(0)
+  courtesyMinutes Int @default(0)
+  nonBillableMinutes Int @default(0)
+  status BalanceStatus @default(OPEN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([companyId, month, year])
+}
+
+model SupportHourEntry {
+  id String @id @default(cuid())
+  ticketId String
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  companyId String
+  company Company @relation(fields: [companyId], references: [id])
+  contractId String
+  contract ClientSupportContract @relation(fields: [contractId], references: [id])
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  date DateTime
+  durationMinutes Int
+  activityType ActivityType
+  description String
+  billingType BillingType
+  balanceAfterMinutes Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model KnowledgeArticle {
+  id String @id @default(cuid())
+  title String
+  category String
+  content String
+  systemId String?
+  system ClientSystem? @relation(fields: [systemId], references: [id])
+  visibility ArticleVisibility @default(BOTH)
+  status ArticleStatus @default(DRAFT)
+  createdById String
+  createdBy User @relation(fields: [createdById], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  title String
+  message String
+  type String
+  read Boolean @default(false)
+  relatedTicketId String?
+  relatedTicket Ticket? @relation(fields: [relatedTicketId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+  userId String?
+  user User? @relation(fields: [userId], references: [id])
+  action String
+  entity String
+  entityId String
+  description String
+  createdAt DateTime @default(now())
+}

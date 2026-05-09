@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+.dark { color-scheme: dark; }
+body { @apply min-h-screen bg-slate-50 text-slate-950 antialiased dark:bg-[#06111F] dark:text-slate-100; }
+.pulsari-shell { background:
+  radial-gradient(circle at top left, rgba(0,224,255,.18), transparent 32rem),
+  radial-gradient(circle at 85% 15%, rgba(124,58,237,.18), transparent 28rem),
+  linear-gradient(135deg, rgba(6,17,31,.02), rgba(236,72,153,.04)); }
+.card { @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-slate-900/80; }
+.input { @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 dark:border-white/10 dark:bg-slate-950; }
+.btn { @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition; }
+.btn-primary { @apply bg-cyan-400 text-slate-950 hover:bg-cyan-300; }
+.btn-secondary { @apply border border-slate-200 bg-white hover:bg-slate-50 dark:border-white/10 dark:bg-slate-900 dark:hover:bg-slate-800; }

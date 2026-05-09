@@ -1,13 +1,92 @@
-# Your GitHub Learning Lab Repository for Introducing GitHub
+# Pulsari Desk
 
-Welcome to **your** repository for your GitHub Learning Lab course. This repository will be used during the different activities that I will be guiding you through. See a word you don't understand? We've included an emoji 📖 next to some key terms. Click on it to see its definition.
+Central inteligente de chamados e suporte técnico da Agência Pulsari.
 
-Oh! I haven't introduced myself...
+## Stack
 
-I'm the GitHub Learning Lab bot and I'm here to help guide you in your journey to learn and master the various topics covered in this course. I will be using Issue and Pull Request comments to communicate with you. In fact, I already added an issue for you to check out.
+- Next.js + React + TypeScript
+- Tailwind CSS, componentes internos no padrão shadcn/ui e Lucide Icons
+- Prisma ORM + PostgreSQL
+- Auth.js/NextAuth com login por credenciais
+- Upload local preparado para evolução futura para storage externo
 
-![issue tab](https://lab.github.com/public/images/issue_tab.png)
+## Como rodar localmente
 
-I'll meet you over there, can't wait to get started!
+1. Instale as dependências:
 
-This course is using the :sparkles: open source project [reveal.js](https://github.com/hakimel/reveal.js/). In some cases we’ve made changes to the history so it would behave during class, so head to the original project repo to learn more about the cool people behind this project.
+```bash
+npm install
+```
+
+2. Copie as variáveis de ambiente:
+
+```bash
+cp .env.example .env
+```
+
+3. Suba um PostgreSQL local e ajuste `DATABASE_URL` no `.env`.
+
+4. Execute migration e seed:
+
+```bash
+npx prisma migrate dev --name init
+npm run prisma:seed
+```
+
+5. Rode a aplicação:
+
+```bash
+npm run dev
+```
+
+Acesse `http://localhost:3000`.
+
+## Usuários seed
+
+Todos usam a senha local `Pulsari@123`.
+
+- Admin Pulsari: `admin@pulsari.com.br`
+- Técnico Pulsari: `tecnico@pulsari.com.br`
+- Cliente exemplo: `cliente@empresa.com.br`
+
+## Módulos implementados no MVP inicial
+
+- Login protegido por Auth.js.
+- Layout base responsivo com sidebar, topbar, light/dark mode e identidade Pulsari.
+- Schema Prisma completo para clientes, sistemas, chamados, comentários, anexos, histórico, planos, contratos, saldo, extrato de horas, base de conhecimento, notificações e auditoria.
+- Seed com usuários, planos, cliente NP Assessoria, sistemas e chamados fictícios.
+- Dashboard da equipe com indicadores e resumo por status.
+- Clientes com cadastro, listagem e detalhe.
+- Sistemas vinculados com cadastro e cards.
+- Chamados em lista, detalhe, comentários públicos/internos, alteração de status/prioridade e registro de horas.
+- Kanban por status.
+- Planos de suporte.
+- Banco de horas com saldos, alertas e extrato.
+- Relatório mensal simples por cliente com estrutura para exportação.
+- Área do cliente com dashboard, abertura de chamado em linguagem simples, chamados, sistemas e horas.
+
+## Próximas etapas preparadas
+
+- Upload real de anexos em storage externo.
+- Regras avançadas de SLA e permissões por rota.
+- Exportação PDF/Excel.
+- Notificações por e-mail/WhatsApp.
+- API pública para abertura de chamados por sistemas Pulsari.
+- Evolução futura para SaaS comercial multiempresa.
+
+## Fluxo recomendado agora
+
+1. Resolver acesso ao registry npm do ambiente e rodar `npm install` para gerar um `package-lock.json` atualizado.
+2. Executar `npx prisma generate` e `npx prisma migrate dev --name init` contra um PostgreSQL local.
+3. Rodar `npm run prisma:seed` e entrar com `admin@pulsari.com.br` / `Pulsari@123`.
+4. Validar manualmente os fluxos críticos: abrir chamado como cliente, responder como equipe, adicionar nota interna, mudar status e registrar horas.
+5. Na próxima iteração, priorizar upload real de anexos, CRUD completo de planos/usuários/base de conhecimento e testes automatizados.
+
+## Regras de segurança já cobertas no MVP inicial
+
+- Rotas da equipe exigem perfil `ADMIN` ou `TECHNICIAN`.
+- Rotas do cliente exigem perfil `CLIENT_MANAGER` ou `CLIENT_USER` com `companyId`.
+- Server actions validam escopo da empresa antes de criar chamados, comentar ou registrar horas.
+- Comentários internos só podem ser criados pela equipe Pulsari e não são carregados na tela de detalhe do cliente.
+- Cliente inativo, suspenso ou inexistente não pode abrir novo chamado.
+- Registro descontável não permite saldo negativo; quando não houver saldo, a atuação deve ser lançada como hora extra ou passar por aprovação.

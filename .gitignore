@@ -2,3 +2,12 @@ _site/
 .sass-cache/
 .jekyll-metadata
 .bundle
+
+# Pulsari Desk / Next.js
+node_modules/
+.next/
+out/
+.env
+.env*.local
+coverage/
+.prisma/
