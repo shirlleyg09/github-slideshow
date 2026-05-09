@@ -1,0 +1,6 @@
+import { Topbar } from "@/components/app/topbar";
+import { PriorityBadge } from "@/components/app/badges";
+import { prisma } from "@/lib/prisma";
+import { statusLabel } from "@/lib/utils";
+const columns=["NEW","TRIAGE","IN_PROGRESS","WAITING_CLIENT","DEVELOPMENT","TESTING","RESOLVED"];
+export default async function Kanban(){ const tickets=await prisma.ticket.findMany({include:{company:true,system:true,assignee:true},orderBy:{createdAt:"desc"}}); return <><Topbar title="Kanban"/><div className="flex gap-4 overflow-x-auto p-5">{columns.map(col=><section key={col} className="w-80 shrink-0 rounded-2xl border border-slate-200 bg-slate-100 p-3 dark:border-white/10 dark:bg-slate-950/70"><h2 className="mb-3 font-semibold">{statusLabel(col)}</h2><div className="space-y-3">{tickets.filter(t=>t.status===col).map(t=><a href={`/tickets/${t.id}`} key={t.id} className="block rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900"><div className="flex justify-between gap-2"><b>{t.code}</b><PriorityBadge priority={t.priority}/></div><h3 className="mt-2 font-semibold">{t.title}</h3><p className="mt-2 text-xs text-slate-500">{t.company.name} · {t.system?.name ?? "Sem sistema"}</p><p className="mt-3 text-xs text-slate-500">Aberto em {t.createdAt.toLocaleDateString("pt-BR")}</p></a>)}</div></section>)}</div></> }

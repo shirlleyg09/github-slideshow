@@ -1,0 +1,5 @@
+"use client";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+export function LoginForm(){ const router=useRouter(); const [error,setError]=useState(""); async function onSubmit(e:React.FormEvent<HTMLFormElement>){ e.preventDefault(); const fd=new FormData(e.currentTarget); const res=await signIn("credentials",{ email:fd.get("email"), password:fd.get("password"), redirect:false }); if(res?.error) setError("Credenciais inválidas"); else router.push("/dashboard"); } return <form onSubmit={onSubmit} className="space-y-4"><label className="block text-sm font-medium">E-mail<input name="email" type="email" className="input mt-2" defaultValue="admin@pulsari.com.br" required/></label><label className="block text-sm font-medium">Senha<input name="password" type="password" className="input mt-2" defaultValue="Pulsari@123" required/></label>{error && <p className="text-sm text-red-500">{error}</p>}<button className="btn btn-primary w-full" type="submit">Entrar no Pulsari Desk</button></form> }
